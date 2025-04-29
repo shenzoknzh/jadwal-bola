@@ -76,39 +76,45 @@ function displayMatches(groupedMatches) {
     order.forEach(category => {
         if (groupedMatches[category].length > 0) {
             const section = document.createElement('section');
-            section.className = 'match-section';
+section.className = 'match-section';
 
-            const title = document.createElement('h2');
-            title.textContent = category;
-            section.appendChild(title);
+const title = document.createElement('h2');
+title.textContent = category;
+section.appendChild(title);
 
-            groupedMatches[category].forEach(match => {
-                const card = document.createElement('div');
-                card.className = 'match-card';
-                card.setAttribute('data-kickoff', match.fixture.date);
+if (groupedMatches[category].length === 0) {
+    const empty = document.createElement('p');
+    empty.textContent = "Tidak ada pertandingan.";
+    section.appendChild(empty);
+} else {
+    groupedMatches[category].forEach(match => {
+        const card = document.createElement('div');
+        card.className = 'match-card';
+        card.setAttribute('data-kickoff', match.fixture.date);
 
-                const home = match.teams.home.name;
-                const away = match.teams.away.name;
-                const kickoff = match.fixture.date;
-                const homeLogo = match.teams.home.logo;
-                const awayLogo = match.teams.away.logo;
+        const home = match.teams.home.name;
+        const away = match.teams.away.name;
+        const kickoff = match.fixture.date;
+        const homeLogo = match.teams.home.logo;
+        const awayLogo = match.teams.away.logo;
 
-                card.innerHTML = `
-                    <div class="team">
-                        <img src="${homeLogo}" alt="${home}" class="team-logo">
-                        <span class="team-name">${home}</span>
-                        <strong>vs</strong>
-                        <span class="team-name">${away}</span>
-                        <img src="${awayLogo}" alt="${away}" class="team-logo">
-                    </div>
-                    <p>Kick-off: ${new Date(kickoff).toLocaleTimeString('id-ID')}</p>
-                    <div class="countdown">Loading...</div>
-                `;
+        card.innerHTML = `
+            <div class="team">
+                <img src="${homeLogo}" alt="${home}" class="team-logo">
+                <span class="team-name">${home}</span>
+                <strong>vs</strong>
+                <span class="team-name">${away}</span>
+                <img src="${awayLogo}" alt="${away}" class="team-logo">
+            </div>
+            <p>Kick-off: ${new Date(kickoff).toLocaleTimeString('id-ID')}</p>
+            <div class="countdown">Loading...</div>
+        `;
 
-                section.appendChild(card);
-            });
+        section.appendChild(card);
+    });
+}
 
-            container.appendChild(section);
+container.appendChild(section);
         }
     });
 
