@@ -106,7 +106,8 @@ if (groupedMatches[category].length === 0) {
                 <span class="team-name">${away}</span>
                 <img src="${awayLogo}" alt="${away}" class="team-logo">
             </div>
-            <p>Kick-off: ${new Date(kickoff).toLocaleTimeString('id-ID')}</p>
+            <p>Kick-off: ${new Date(new Date(kickoff).getTime() + (7 * 60 * 60 * 1000)).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} WIB</p>
+
             <div class="countdown">Loading...</div>
         `;
 
@@ -122,7 +123,7 @@ container.appendChild(section);
 }
 
 function updateCountdowns() {
-    const now = new Date().getTime();
+    const now = new Date().getTime() + (7 * 60 * 60 * 1000); // WIB
 
     document.querySelectorAll('.match-card').forEach(card => {
         const kickoffTime = new Date(card.getAttribute('data-kickoff')).getTime();
