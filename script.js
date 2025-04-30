@@ -4,6 +4,7 @@
 // - Liga utama 7 hari ke depan
 // - GMT+7 (WIB) waktu lokal dengan timeZone
 // - Pertandingan selesai diurutkan paling bawah
+// - Tambahan grup fallback: SEMUA JADWAL untuk debugging
 
 const API_KEY = "91e0016be448e559f0b48b3798c95f59";
 
@@ -68,7 +69,8 @@ function groupMatches(matches) {
         "LIGA INDONESIA": { upcoming: [], finished: [] },
         "LIGA ITALIA": { upcoming: [], finished: [] },
         "LIGA SPANYOL": { upcoming: [], finished: [] },
-        "LIGA INGGRIS": { upcoming: [], finished: [] }
+        "LIGA INGGRIS": { upcoming: [], finished: [] },
+        "SEMUA JADWAL": { upcoming: [], finished: [] }
     };
 
     matches.forEach(match => {
@@ -82,12 +84,21 @@ function groupMatches(matches) {
         const filter = searchInput.value.toLowerCase();
         if (filter && !home.toLowerCase().includes(filter) && !away.toLowerCase().includes(filter)) return;
 
+        let added = false;
+
         if (isUCL || (BIG_TEAMS.includes(home) && BIG_TEAMS.includes(away))) {
-            (isFinished ? grouped["BIG MATCH"].finished : grouped["BIG MATCH"].upcoming).push(match);
+            grouped["BIG MATCH"][isFinished ? "finished" : "upcoming"].push(match);
+            added = true;
         } else if (PRIORITY_LEAGUES[leagueId]) {
             const key = PRIORITY_LEAGUES[leagueId];
             if (!grouped[key]) grouped[key] = { upcoming: [], finished: [] };
-            (isFinished ? grouped[key].finished : grouped[key].upcoming).push(match);
+            grouped[key][isFinished ? "finished" : "upcoming"].push(match);
+            added = true;
+        }
+
+        // Masukkan ke fallback jika belum dimasukkan
+        if (!added) {
+            grouped["SEMUA JADWAL"][isFinished ? "finished" : "upcoming"].push(match);
         }
     });
 
@@ -98,7 +109,7 @@ function displayMatches(groupedMatches) {
     const container = document.getElementById('schedule-container');
     container.innerHTML = "";
 
-    const order = ["BIG MATCH", "LIGA INDONESIA", "LIGA ITALIA", "LIGA SPANYOL", "LIGA INGGRIS"];
+    const order = ["BIG MATCH", "LIGA INDONESIA", "LIGA ITALIA", "LIGA SPANYOL", "LIGA INGGRIS", "SEMUA JADWAL"];
 
     order.forEach(category => {
         if (!groupedMatches[category]) return;
