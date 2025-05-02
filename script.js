@@ -1,62 +1,58 @@
-// Fitur tambahan:
-// - Big Match menampilkan 7 hari ke depan
-// - Liga Champions dimasukkan ke BIG MATCH
-// - Liga utama 7 hari ke depan
-// - GMT+7 (WIB) waktu lokal dengan timeZone
-// - Pertandingan selesai diurutkan paling bawah
-// - Tambahan grup fallback: SEMUA JADWAL untuk debugging
-
 const API_KEY = "91e0016be448e559f0b48b3798c95f59";
 
+// Konfigurasi liga prioritas
 const PRIORITY_LEAGUES = {
-    2: "LIGA CHAMPIONS",
+    "big_match": [],
     39: "LIGA INGGRIS",
     135: "LIGA ITALIA",
     140: "LIGA SPANYOL",
-    1016: "LIGA INDONESIA"
+    1016: "LIGA INDONESIA" // Pastikan ID Liga Indonesia sudah benar
 };
 
+// Tim-tim besar untuk deteksi big match
 const BIG_TEAMS = [
     "Manchester United", "Manchester City", "Liverpool", "Arsenal", "Chelsea", "Tottenham",
     "Real Madrid", "Barcelona", "Atletico Madrid",
     "AC Milan", "Inter", "Juventus", "Napoli",
-    "Bayern Munich", "Paris Saint Germain", "Borussia Dortmund",
-    "Persib", "Persija", "Arema", "Persebaya"
+    "Bayern Munich", "Paris Saint-Germain", "Chelsea", "BVB Dortmund", "Porto", 
+    "PSV Eindhoven", "Benfica", "Arsenal", // Tim-tim besar dari Liga Champions
+    "Persib", "Persija", "Arema", "Persebaya",
+    "Flamengo", "Boca Juniors", "Al Ahly", "Al-Hilal", "Celtic", "Rangers", "Galatasaray", "Fenerbahçe",
+    "Fluminense", "River Plate", "Corinthians Paulista", "São Paulo FC",
+    // Menambahkan tim yang masuk final kompetisi 2024/25
+    "Al-Ahli", "Kawasaki Frontale", // AFC Champions League Final
+    "Paris Saint-Germain", "Arsenal", // UEFA Champions League Final
+    "Tottenham Hotspur", // UEFA Europa League Final
+    "Fiorentina", // UEFA Conference League Final
+    "Chelsea" // UEFA Conference League Final
 ];
-
-const dateInput = document.createElement("input");
-dateInput.type = "date";
-dateInput.valueAsDate = new Date();
-dateInput.addEventListener("change", () => fetchMatches());
-document.querySelector(".controls").appendChild(dateInput);
-
-const searchInput = document.createElement("input");
-searchInput.type = "text";
-searchInput.placeholder = "Cari tim...";
-searchInput.addEventListener("input", () => fetchMatches());
-document.querySelector(".controls").appendChild(searchInput);
 
 async function fetchMatches() {
     const today = new Date();
-    const promises = [];
-    for (let i = 0; i < 7; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + i);
-        const dateStr = date.toISOString().split('T')[0];
+    const sevenDaysFromNow = new Date(today);
+    sevenDaysFromNow.setDate(today.getDate() + 7);
 
-        const url = `https://v3.football.api-sports.io/fixtures?date=${dateStr}`;
-        promises.push(
-            fetch(url, {
-                headers: { "x-apisports-key": API_KEY }
-            }).then(res => res.json())
-        );
-    }
+    const tenDaysFromNow = new Date(today);
+    tenDaysFromNow.setDate(today.getDate() + 10);
+
+    // Format tanggal dalam format YYYY-MM-DD
+    const startDate = sevenDaysFromNow.toISOString().split('T')[0];
+    const endDate = tenDaysFromNow.toISOString().split('T')[0];
+
+    // Mengambil jadwal dari API untuk rentang tanggal 7 hingga 10 hari mendatang
+    const url = `https://v3.football.api-sports.io/fixtures?date=${startDate}&end_date=${endDate}`;
 
     try {
-        const results = await Promise.all(promises);
-        const allMatches = results.flatMap(r => r.response);
-        console.log("[DEBUG] Total Matches fetched:", allMatches.length);
-        displayMatches(groupMatches(allMatches));
+        const response = await fetch(url, {
+            headers: {
+                "x-apisports-key": API_KEY
+            }
+        });
+
+        const data = await response.json();
+        const matches = data.response;
+
+        displayMatches(groupMatches(matches)); // Menampilkan jadwal yang dikelompokkan
     } catch (error) {
         console.error("Error fetching data:", error);
         document.getElementById('schedule-container').innerHTML = "<p>Gagal memuat jadwal.</p>";
@@ -65,40 +61,28 @@ async function fetchMatches() {
 
 function groupMatches(matches) {
     const grouped = {
-        "BIG MATCH": { upcoming: [], finished: [] },
-        "LIGA INDONESIA": { upcoming: [], finished: [] },
-        "LIGA ITALIA": { upcoming: [], finished: [] },
-        "LIGA SPANYOL": { upcoming: [], finished: [] },
-        "LIGA INGGRIS": { upcoming: [], finished: [] },
-        "SEMUA JADWAL": { upcoming: [], finished: [] }
+        "BIG MATCH": [],
+        "LIGA INGGRIS": [],
+        "LIGA ITALIA": [],
+        "LIGA SPANYOL": [],
+        "LIGA INDONESIA": [],  // Pastikan kategori Liga Indonesia ada
+        "LAINNYA": []
     };
 
     matches.forEach(match => {
         const home = match.teams.home.name;
         const away = match.teams.away.name;
         const leagueId = match.league.id;
-        const isFinished = match.fixture.status.short === "FT";
-        const isBigTeam = BIG_TEAMS.includes(home) || BIG_TEAMS.includes(away);
-        const isUCL = leagueId === 2;
 
-        const filter = searchInput.value.toLowerCase();
-        if (filter && !home.toLowerCase().includes(filter) && !away.toLowerCase().includes(filter)) return;
-
-        let added = false;
-
-        if (isUCL || (BIG_TEAMS.includes(home) && BIG_TEAMS.includes(away))) {
-            grouped["BIG MATCH"][isFinished ? "finished" : "upcoming"].push(match);
-            added = true;
+        // Deteksi apakah ini adalah pertandingan BIG MATCH
+        const isBigMatch = BIG_TEAMS.includes(home) && BIG_TEAMS.includes(away);
+        if (isBigMatch) {
+            grouped["BIG MATCH"].push(match);  // Menambahkan ke BIG MATCH
         } else if (PRIORITY_LEAGUES[leagueId]) {
-            const key = PRIORITY_LEAGUES[leagueId];
-            if (!grouped[key]) grouped[key] = { upcoming: [], finished: [] };
-            grouped[key][isFinished ? "finished" : "upcoming"].push(match);
-            added = true;
-        }
-
-        // Masukkan ke fallback jika belum dimasukkan
-        if (!added) {
-            grouped["SEMUA JADWAL"][isFinished ? "finished" : "upcoming"].push(match);
+            // Menambahkan pertandingan ke kategori yang sesuai
+            grouped[PRIORITY_LEAGUES[leagueId]].push(match);
+        } else {
+            grouped["LAINNYA"].push(match);
         }
     });
 
@@ -109,85 +93,66 @@ function displayMatches(groupedMatches) {
     const container = document.getElementById('schedule-container');
     container.innerHTML = "";
 
-    const order = ["BIG MATCH", "LIGA INDONESIA", "LIGA ITALIA", "LIGA SPANYOL", "LIGA INGGRIS", "SEMUA JADWAL"];
+    const order = ["BIG MATCH", "LIGA INGGRIS", "LIGA ITALIA", "LIGA SPANYOL", "LIGA INDONESIA", "LAINNYA"];
 
     order.forEach(category => {
-        if (!groupedMatches[category]) return;
+        if (groupedMatches[category].length > 0) {
+            const section = document.createElement('section');
+            section.className = 'match-section';
 
-        const section = document.createElement('section');
-        section.className = 'match-section';
+            const title = document.createElement('h2');
+            title.textContent = category;
+            section.appendChild(title);
 
-        const title = document.createElement('h2');
-        title.textContent = category;
-        section.appendChild(title);
+            if (groupedMatches[category].length === 0) {
+                const empty = document.createElement('p');
+                empty.textContent = "Tidak ada pertandingan.";
+                section.appendChild(empty);
+            } else {
+                groupedMatches[category].forEach(match => {
+                    const card = document.createElement('div');
+                    card.className = 'match-card';
+                    card.setAttribute('data-kickoff', match.fixture.date);
 
-        const allMatches = [
-            ...groupedMatches[category].upcoming,
-            ...groupedMatches[category].finished
-        ];
+                    const home = match.teams.home.name;
+                    const away = match.teams.away.name;
+                    const kickoff = match.fixture.date;
+                    const homeLogo = match.teams.home.logo;
+                    const awayLogo = match.teams.away.logo;
 
-        if (allMatches.length === 0) {
-            const empty = document.createElement('p');
-            empty.textContent = "Tidak ada pertandingan.";
-            section.appendChild(empty);
-        } else {
-            allMatches.forEach(match => {
-                const card = document.createElement('div');
-                card.className = 'match-card';
-                card.setAttribute('data-kickoff', match.fixture.date);
+                    card.innerHTML = `
+                        <div class="team">
+                            <img src="${homeLogo}" alt="${home}" class="team-logo">
+                            <span class="team-name">${home}</span>
+                            <strong>vs</strong>
+                            <span class="team-name">${away}</span>
+                            <img src="${awayLogo}" alt="${away}" class="team-logo">
+                        </div>
+                        <p>Kick-off: ${new Date(new Date(kickoff).getTime() + (7 * 60 * 60 * 1000)).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} WIB</p>
 
-                const home = match.teams.home.name;
-                const away = match.teams.away.name;
-                const kickoff = match.fixture.date;
-                const homeLogo = match.teams.home.logo;
-                const awayLogo = match.teams.away.logo;
-                const status = match.fixture.status.short;
+                        <div class="countdown">Loading...</div>
+                    `;
 
-                let countdownText = "Loading...";
-                if (status === "FT") countdownText = "Pertandingan Selesai";
-
-                const time = new Date(kickoff);
-                const formattedTime = time.toLocaleTimeString("id-ID", {
-                    timeZone: "Asia/Jakarta",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false
+                    section.appendChild(card);
                 });
+            }
 
-                card.innerHTML = `
-                    <div class="team">
-                        <img src="${homeLogo}" alt="${home}" class="team-logo">
-                        <span class="team-name">${home}</span>
-                        <strong>vs</strong>
-                        <span class="team-name">${away}</span>
-                        <img src="${awayLogo}" alt="${away}" class="team-logo">
-                    </div>
-                    <p>Kick-off: ${formattedTime} WIB</p>
-                    <div class="countdown">${countdownText}</div>
-                `;
-
-                section.appendChild(card);
-            });
+            container.appendChild(section);
         }
-
-        container.appendChild(section);
     });
 
     updateCountdowns();
 }
 
 function updateCountdowns() {
-    const now = new Date().getTime() + (7 * 60 * 60 * 1000);
+    const now = new Date().getTime() + (7 * 60 * 60 * 1000); // WIB
 
     document.querySelectorAll('.match-card').forEach(card => {
-        const countdownEl = card.querySelector('.countdown');
-        if (!countdownEl || countdownEl.innerText === "Pertandingan Selesai") return;
-
         const kickoffTime = new Date(card.getAttribute('data-kickoff')).getTime();
         const distance = kickoffTime - now;
 
         if (distance <= 0) {
-            countdownEl.innerText = "Sedang Berlangsung!";
+            card.querySelector('.countdown').innerText = "Sedang Berlangsung!";
             return;
         }
 
@@ -195,7 +160,7 @@ function updateCountdowns() {
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        countdownEl.innerText = `${hours}j ${minutes}m ${seconds}d`;
+        card.querySelector('.countdown').innerText = `${hours}j ${minutes}m ${seconds}s`;
     });
 }
 
