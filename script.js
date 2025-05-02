@@ -30,10 +30,10 @@ const BIG_TEAMS = [
 async function fetchMatches() {
     const today = new Date();
     const sevenDaysFromNow = new Date(today);
-    sevenDaysFromNow.setDate(today.getDate() + 7);
+    sevenDaysFromNow.setDate(today.getDate() + 7); // 7 hari ke depan
 
     const tenDaysFromNow = new Date(today);
-    tenDaysFromNow.setDate(today.getDate() + 10);
+    tenDaysFromNow.setDate(today.getDate() + 10); // 10 hari ke depan (untuk rentang tanggal lebih luas)
 
     // Format tanggal dalam format YYYY-MM-DD
     const startDate = sevenDaysFromNow.toISOString().split('T')[0];
@@ -50,8 +50,15 @@ async function fetchMatches() {
         });
 
         const data = await response.json();
-        const matches = data.response;
+        console.log(data);  // Tampilkan data yang diterima dari API untuk debugging
 
+        // Pastikan ada data pertandingan yang diterima
+        if (!data || !data.response || data.response.length === 0) {
+            document.getElementById('schedule-container').innerHTML = "<p>Jadwal pertandingan tidak ditemukan.</p>";
+            return; // Menghentikan eksekusi jika tidak ada data
+        }
+
+        const matches = data.response;
         displayMatches(groupMatches(matches)); // Menampilkan jadwal yang dikelompokkan
     } catch (error) {
         console.error("Error fetching data:", error);
