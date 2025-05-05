@@ -5,7 +5,7 @@ const PRIORITY_LEAGUES = {
     39: "LIGA INGGRIS",
     135: "LIGA ITALIA",
     140: "LIGA SPANYOL",
-    1016: "LIGA INDONESIA" // Pastikan ini ada dan benar
+    1016: "LIGA INDONESIA" // Liga Indonesia tetap ada di sini
 };
 
 const BIG_TEAMS = [
