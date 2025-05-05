@@ -1,11 +1,3 @@
-// Fitur tambahan:
-// - Big Match menampilkan 7 hari ke depan
-// - Liga Champions dimasukkan ke BIG MATCH
-// - Liga utama 7 hari ke depan
-// - GMT+7 (WIB) waktu lokal dengan timeZone
-// - Pertandingan selesai diurutkan paling bawah
-// - Tambahan grup fallback: SEMUA JADWAL untuk debugging
-
 const API_KEY = "91e0016be448e559f0b48b3798c95f59";
 
 const PRIORITY_LEAGUES = {
@@ -13,7 +5,7 @@ const PRIORITY_LEAGUES = {
     39: "LIGA INGGRIS",
     135: "LIGA ITALIA",
     140: "LIGA SPANYOL",
-    1016: "LIGA INDONESIA"
+    1016: "LIGA INDONESIA" // Pastikan ini ada dan benar
 };
 
 const BIG_TEAMS = [
@@ -86,17 +78,26 @@ function groupMatches(matches) {
 
         let added = false;
 
+        // Big Match atau Liga Utama yang penting
         if (isUCL || (BIG_TEAMS.includes(home) && BIG_TEAMS.includes(away))) {
             grouped["BIG MATCH"][isFinished ? "finished" : "upcoming"].push(match);
             added = true;
-        } else if (PRIORITY_LEAGUES[leagueId]) {
+        }
+
+        // Memastikan Liga Indonesia dimasukkan dengan benar
+        else if (leagueId === 1016) {
+            grouped["LIGA INDONESIA"][isFinished ? "finished" : "upcoming"].push(match);
+            added = true;
+        }
+
+        // Memastikan Liga Utama lainnya dimasukkan
+        else if (PRIORITY_LEAGUES[leagueId]) {
             const key = PRIORITY_LEAGUES[leagueId];
-            if (!grouped[key]) grouped[key] = { upcoming: [], finished: [] };
             grouped[key][isFinished ? "finished" : "upcoming"].push(match);
             added = true;
         }
 
-        // Masukkan ke fallback jika belum dimasukkan
+        // Jika tidak cocok dengan yang di atas, masuk ke "SEMUA JADWAL"
         if (!added) {
             grouped["SEMUA JADWAL"][isFinished ? "finished" : "upcoming"].push(match);
         }
