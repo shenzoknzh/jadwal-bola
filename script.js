@@ -16,6 +16,17 @@ const BIG_TEAMS = [
     "Persib", "Persija", "Arema", "Persebaya"
 ];
 
+const dateInput = document.createElement("input");
+dateInput.type = "date";
+dateInput.valueAsDate = new Date();
+dateInput.addEventListener("change", () => fetchMatches());
+document.querySelector(".controls").appendChild(dateInput);
+
+const searchInput = document.createElement("input");
+searchInput.type = "text";
+searchInput.placeholder = "Cari tim...";
+searchInput.addEventListener("input", () => fetchMatches());
+document.querySelector(".controls").appendChild(searchInput);
 
 async function fetchMatches() {
     const today = new Date();
