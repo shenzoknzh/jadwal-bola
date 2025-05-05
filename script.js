@@ -140,6 +140,14 @@ function displayMatches(groupedMatches) {
                     hour12: false
                 });
 
+                // Menambahkan tanggal pertandingan
+                const formattedDate = time.toLocaleDateString("id-ID", {
+                    timeZone: "Asia/Jakarta",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric"
+                });
+
                 card.innerHTML = `
                     <div class="team">
                         <img src="${homeLogo}" alt="${home}" class="team-logo">
@@ -148,7 +156,7 @@ function displayMatches(groupedMatches) {
                         <span class="team-name">${away}</span>
                         <img src="${awayLogo}" alt="${away}" class="team-logo">
                     </div>
-                    <p>Kick-off: ${formattedTime} WIB</p>
+                    <p>${formattedDate}, Kick-off: ${formattedTime} WIB</p>
                     <div class="countdown">${countdownText}</div>
                 `;
 
