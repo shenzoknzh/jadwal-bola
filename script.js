@@ -16,18 +16,6 @@ const BIG_TEAMS = [
     "Persib", "Persija", "Arema", "Persebaya"
 ];
 
-const dateInput = document.createElement("input");
-dateInput.type = "date";
-dateInput.valueAsDate = new Date();
-dateInput.addEventListener("change", () => fetchMatches());
-document.querySelector(".controls").appendChild(dateInput);
-
-const searchInput = document.createElement("input");
-searchInput.type = "text";
-searchInput.placeholder = "Cari tim...";
-searchInput.addEventListener("input", () => fetchMatches());
-document.querySelector(".controls").appendChild(searchInput);
-
 async function fetchMatches() {
     const today = new Date();
     const promises = [];
@@ -72,9 +60,6 @@ function groupMatches(matches) {
         const isFinished = match.fixture.status.short === "FT";
         const isBigTeam = BIG_TEAMS.includes(home) || BIG_TEAMS.includes(away);
         const isUCL = leagueId === 2;
-
-        const filter = searchInput.value.toLowerCase();
-        if (filter && !home.toLowerCase().includes(filter) && !away.toLowerCase().includes(filter)) return;
 
         let added = false;
 
