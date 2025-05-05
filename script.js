@@ -187,7 +187,7 @@ function updateCountdowns() {
         const kickoffTime = new Date(card.getAttribute('data-kickoff')).getTime();
         const distance = kickoffTime - now;
 
-        if (distance <= 0) {
+        if (distance <= 0) {    
             countdownEl.innerText = "Sedang Berlangsung!";
             return;
         }
