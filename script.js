@@ -5,7 +5,7 @@ const PRIORITY_LEAGUES = {
     39: "LIGA INGGRIS",
     135: "LIGA ITALIA",
     140: "LIGA SPANYOL",
-    1016: "LIGA INDONESIA" // Liga Indonesia tetap ada di sini
+    1016: "LIGA INDONESIA"
 };
 
 const BIG_TEAMS = [
@@ -178,16 +178,17 @@ function displayMatches(groupedMatches) {
 }
 
 function updateCountdowns() {
-    const now = new Date().getTime() + (7 * 60 * 60 * 1000);
+    const now = new Date().getTime(); // Mengambil waktu UTC saat ini
+    const nowWIB = now + (7 * 60 * 60 * 1000); // Menyesuaikan dengan WIB (GMT+7)
 
     document.querySelectorAll('.match-card').forEach(card => {
         const countdownEl = card.querySelector('.countdown');
         if (!countdownEl || countdownEl.innerText === "Pertandingan Selesai") return;
 
-        const kickoffTime = new Date(card.getAttribute('data-kickoff')).getTime();
-        const distance = kickoffTime - now;
+        const kickoffTime = new Date(card.getAttribute('data-kickoff')).getTime(); // Mengambil waktu kickoff dalam UTC
+        const distance = kickoffTime - nowWIB; // Menghitung selisih waktu dengan WIB
 
-        if (distance <= 0) {    
+        if (distance <= 0) {
             countdownEl.innerText = "Sedang Berlangsung!";
             return;
         }
